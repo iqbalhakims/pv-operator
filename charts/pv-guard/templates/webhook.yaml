@@ -1,0 +1,62 @@
+{{- $caBundle := "" }}
+{{- if not .Values.certManager.enabled }}
+{{- $secretName := include "pv-guard.tlsSecretName" . }}
+{{- $svc := include "pv-guard.serviceName" . }}
+{{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName }}
+{{- $crt := "" }}{{- $key := "" }}
+{{- if and $existing (index $existing.data "ca.crt") }}
+{{- $caBundle = index $existing.data "ca.crt" }}
+{{- $crt = index $existing.data "tls.crt" }}
+{{- $key = index $existing.data "tls.key" }}
+{{- else }}
+{{- $ca := genCA (printf "%s-ca" (include "pv-guard.fullname" .)) 3650 }}
+{{- $dns := list (printf "%s.%s.svc" $svc .Release.Namespace) (printf "%s.%s.svc.cluster.local" $svc .Release.Namespace) }}
+{{- $cert := genSignedCert (printf "%s.%s.svc" $svc .Release.Namespace) nil $dns 3650 $ca }}
+{{- $caBundle = $ca.Cert | b64enc }}
+{{- $crt = $cert.Cert | b64enc }}
+{{- $key = $cert.Key | b64enc }}
+{{- end }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $secretName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "pv-guard.labels" . | nindent 4 }}
+type: kubernetes.io/tls
+data:
+  ca.crt: {{ $caBundle }}
+  tls.crt: {{ $crt }}
+  tls.key: {{ $key }}
+---
+{{- end }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: {{ include "pv-guard.fullname" . }}
+  labels:
+    {{- include "pv-guard.labels" . | nindent 4 }}
+  {{- if .Values.certManager.enabled }}
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "pv-guard.fullname" . }}-serving-cert
+  {{- end }}
+webhooks:
+  - name: storage.pv-guard.io
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    failurePolicy: {{ .Values.webhook.failurePolicy }}
+    timeoutSeconds: {{ .Values.webhook.timeoutSeconds }}
+    clientConfig:
+      service:
+        name: {{ include "pv-guard.serviceName" . }}
+        namespace: {{ .Release.Namespace }}
+        path: /validate-storage
+      {{- if $caBundle }}
+      caBundle: {{ $caBundle }}
+      {{- end }}
+    rules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["DELETE"]
+        resources: ["persistentvolumes", "persistentvolumeclaims"]
+        scope: "*"

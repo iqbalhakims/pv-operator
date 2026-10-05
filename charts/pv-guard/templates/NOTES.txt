@@ -1,0 +1,10 @@
+pv-guard is installed. Non-admins can no longer delete PersistentVolumes{{ if .Values.policy.protectPVCs }}, or PVCs bound to a PV with reclaimPolicy Delete{{ end }}.
+
+Test it:
+  kubectl delete pv <name> --as alice --as-group developers
+
+Release a PV for deletion (admin):
+  kubectl annotate pv <name> pv-guard.io/allow-delete=true
+
+Emergency bypass (webhook fails closed):
+  kubectl delete validatingwebhookconfiguration {{ include "pv-guard.fullname" . }}

@@ -1,0 +1,33 @@
+{{- if .Values.certManager.enabled }}
+{{- if not .Values.certManager.issuerRef }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "pv-guard.fullname" . }}-selfsigned
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "pv-guard.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+{{- end }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "pv-guard.fullname" . }}-serving-cert
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "pv-guard.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "pv-guard.tlsSecretName" . }}
+  dnsNames:
+    - {{ include "pv-guard.serviceName" . }}.{{ .Release.Namespace }}.svc
+    - {{ include "pv-guard.serviceName" . }}.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    {{- if .Values.certManager.issuerRef }}
+    {{- toYaml .Values.certManager.issuerRef | nindent 4 }}
+    {{- else }}
+    kind: Issuer
+    name: {{ include "pv-guard.fullname" . }}-selfsigned
+    {{- end }}
+{{- end }}

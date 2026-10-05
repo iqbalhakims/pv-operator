@@ -1,0 +1,24 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: pv-guard
+  annotations:
+    cert-manager.io/inject-ca-from: pv-guard-system/pv-guard-serving-cert
+webhooks:
+  - name: storage.pv-guard.io
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    # Fail closed: if pv-guard is down, deletes are rejected rather than let through.
+    failurePolicy: Fail
+    timeoutSeconds: 5
+    clientConfig:
+      service:
+        name: pv-guard-webhook
+        namespace: pv-guard-system
+        path: /validate-storage
+    rules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["DELETE"]
+        resources: ["persistentvolumes", "persistentvolumeclaims"]
+        scope: "*"

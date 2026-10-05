@@ -1,0 +1,78 @@
+replicaCount: 2
+
+image:
+  repository: pv-guard
+  # Defaults to the chart appVersion.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+policy:
+  # Groups that may delete protected PVs/PVCs.
+  allowedGroups:
+    - system:masters
+  # Users that may delete protected PVs/PVCs. Add your CSI provisioner's
+  # service account here, e.g. system:serviceaccount:kube-system:ebs-csi-controller-sa
+  allowedUsers:
+    - system:kube-controller-manager
+    - system:serviceaccount:kube-system:persistent-volume-binder
+  # Also block deleting PVCs bound to a PV with reclaimPolicy Delete.
+  protectPVCs: true
+  # Switch every PV's reclaimPolicy from Delete to Retain.
+  enforceRetain: false
+
+webhook:
+  # Fail closed: if pv-guard is unavailable, deletes are rejected.
+  failurePolicy: Fail
+  timeoutSeconds: 5
+  port: 9443
+
+certManager:
+  # Use cert-manager for the webhook TLS certificate. When false, the chart
+  # generates a self-signed certificate (kept across upgrades).
+  enabled: true
+  # Existing Issuer/ClusterIssuer to use. Empty creates a self-signed Issuer.
+  issuerRef: {}
+  #  kind: ClusterIssuer
+  #  name: my-issuer
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Extra args passed to the manager, e.g. ["--zap-log-level=debug"].
+extraArgs: []
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 64Mi
+  limits:
+    memory: 128Mi
+
+priorityClassName: ""
+nodeSelector: {}
+tolerations: []
+affinity: {}

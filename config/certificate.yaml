@@ -1,0 +1,22 @@
+# Requires cert-manager: https://cert-manager.io/docs/installation/
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: pv-guard-selfsigned
+  namespace: pv-guard-system
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: pv-guard-serving-cert
+  namespace: pv-guard-system
+spec:
+  secretName: pv-guard-webhook-tls
+  dnsNames:
+    - pv-guard-webhook.pv-guard-system.svc
+    - pv-guard-webhook.pv-guard-system.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: pv-guard-selfsigned

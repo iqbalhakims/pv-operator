@@ -1,0 +1,13 @@
+apiVersion: v2
+name: pv-guard
+description: Admission webhook that prevents non-admins from deleting PersistentVolumes (and PVCs that would delete their PV).
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - kubernetes
+  - persistentvolume
+  - admission-webhook
+  - storage
+annotations:
+  artifacthub.io/license: Apache-2.0

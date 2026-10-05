@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pv-guard
+  namespace: pv-guard-system
+  labels:
+    app: pv-guard
+spec:
+  # The webhook fails closed, so keep more than one replica available.
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pv-guard
+  template:
+    metadata:
+      labels:
+        app: pv-guard
+    spec:
+      serviceAccountName: pv-guard
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: manager
+          image: pv-guard:latest
+          args:
+            - --allowed-groups=system:masters
+            - --allowed-users=system:kube-controller-manager,system:serviceaccount:kube-system:persistent-volume-binder
+            - --protect-pvcs=true
+            - --enforce-retain=false
+          ports:
+            - name: webhook
+              containerPort: 9443
+            - name: metrics
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tls
+              mountPath: /tmp/k8s-webhook-server/serving-certs
+              readOnly: true
+      volumes:
+        - name: tls
+          secret:
+            secretName: pv-guard-webhook-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pv-guard-webhook
+  namespace: pv-guard-system
+spec:
+  selector:
+    app: pv-guard
+  ports:
+    - port: 443
+      targetPort: webhook
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pv-guard
+  namespace: pv-guard-system
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: pv-guard
