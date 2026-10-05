@@ -25,7 +25,7 @@ You can turn on an optional controller (`--enforce-retain=true`) that switches e
 
 ```sh
 helm install pv-guard ./charts/pv-guard -n pv-guard-system --create-namespace \
-  --set image.repository=<registry>/pv-guard \
+  --set image.repository=registry.digitalocean.com/pv-reg/pv-guard \
   --set image.tag=v0.1.0 \
   --set 'policy.allowedGroups={system:masters,platform-admins}'
 ```
@@ -37,9 +37,9 @@ By default the chart gets the webhook's TLS certificate from [cert-manager](http
 You need [cert-manager](https://cert-manager.io/docs/installation/) for the webhook's TLS certificate.
 
 ```sh
-make docker-build IMG=<registry>/pv-guard:v0.1.0
-docker push <registry>/pv-guard:v0.1.0
-make deploy IMG=<registry>/pv-guard:v0.1.0
+make docker-build IMG=registry.digitalocean.com/pv-reg/pv-guard:v0.1.0
+docker push registry.digitalocean.com/pv-reg/pv-guard:v0.1.0
+make deploy IMG=registry.digitalocean.com/pv-reg/pv-guard:v0.1.0
 ```
 
 Set who may bypass the guard in the container args in [config/deployment.yaml](config/deployment.yaml):

@@ -23,7 +23,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: manager
-          image: pv-guard:latest
+          image: registry.digitalocean.com/pv-reg/pv-guard:latest
           args:
             - --allowed-groups=system:masters
             - --allowed-users=system:kube-controller-manager,system:serviceaccount:kube-system:persistent-volume-binder

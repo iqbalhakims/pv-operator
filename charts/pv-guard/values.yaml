@@ -1,7 +1,7 @@
 replicaCount: 2
 
 image:
-  repository: pv-guard
+  repository: registry.digitalocean.com/pv-reg/pv-guard
   # Defaults to the chart appVersion.
   tag: ""
   pullPolicy: IfNotPresent
