@@ -8,7 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	"pv-operator/internal/guard"
+	"github.com/iqbalhakims/pv-operator/internal/guard"
 )
 
 // OriginalPolicyAnnotation records the reclaim policy a PV had before we changed it.

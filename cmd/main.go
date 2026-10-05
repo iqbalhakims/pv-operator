@@ -14,8 +14,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	"pv-operator/internal/controller"
-	"pv-operator/internal/guard"
+	"github.com/iqbalhakims/pv-operator/internal/controller"
+	"github.com/iqbalhakims/pv-operator/internal/guard"
 )
 
 func splitList(s string) []string {

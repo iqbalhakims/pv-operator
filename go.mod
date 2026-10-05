@@ -1,4 +1,4 @@
-module pv-operator
+module github.com/iqbalhakims/pv-operator
 
 go 1.26.0
 
